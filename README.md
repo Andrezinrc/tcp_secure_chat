@@ -12,8 +12,8 @@ Chat simples em C usando TCP com criptografia simetrica.
 ### 1. Compile os arquivos:
 
 ```bash
-gcc server.c crypt.c -o server -lpthread
-gcc client.c crypt.c -o client -lpthread
+gcc server.c crypt.c header.c -o server -lpthread
+gcc client.c crypt.c header.c -o client -lpthread
 ```
 
 ### 2. Execute em dois terminais

@@ -6,6 +6,8 @@
 #include <pthread.h>
 #include <time.h>
 #include "crypt.h"
+#include "colors.h"
+#include "header.h"
 
 #define SERVER_IP "127.0.0.1"
 #define PORT 8080
@@ -25,9 +27,9 @@ void generate_key() {
     if (f) {
         fwrite(key, 1, 16, f);
         fclose(f);
-        printf("[Cliente] Chave gerada e salva em session.key\n");
+        printf(GREEN "[Cliente] Chave gerada e salva em session.key\n" RESET);
     } else {
-        perror("Erro ao salvar a chave");
+        perror(RED "Erro ao salvar a chave" RESET);
         exit(1);
     }
 }
@@ -36,12 +38,17 @@ void generate_key() {
 void* receive_messages(void* arg) {
     unsigned char encrypted[BUFFER_SIZE];
     char decrypted[BUFFER_SIZE];
+
     while (1) {
         int bytes = recv(sockfd, encrypted, BUFFER_SIZE, 0);
         if (bytes <= 0) break;
 
         decrypt_message(encrypted, decrypted, (unsigned char*)key, 16, bytes);
-        printf("\n[Servidor] %s\n", decrypted);
+
+        // limpa a linha, imprime a msg e reaparece o prompt
+        printf("\r\033[K" GREEN "[Servidor] %s\n" RESET, decrypted);
+        printf("> ");
+        fflush(stdout);
     }
     return NULL;
 }
@@ -50,6 +57,7 @@ void* receive_messages(void* arg) {
 void* send_messages(void* arg) {
     char buffer[BUFFER_SIZE];
     unsigned char encrypted[BUFFER_SIZE];
+
     while (1) {
         printf("> ");
         fflush(stdout);
@@ -63,6 +71,8 @@ void* send_messages(void* arg) {
 }
 
 int main() {
+    print_header("Cliente");
+
     struct sockaddr_in server_addr;
 
     // cria socket
@@ -75,7 +85,7 @@ int main() {
 
     // conecta ao servidor
     connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
-    printf("[Cliente] Conectado ao servidor!\n");
+    printf(GREEN "[Cliente] Conectado ao servidor!\n" RESET);
 
     // gera chave e envia
     generate_key();

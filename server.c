@@ -5,6 +5,8 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "crypt.h"
+#include "colors.h"
+#include "header.h"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -12,6 +14,7 @@
 int client_fd;
 char key[16];
 
+// thread para receber mensagens do cliente
 void* receive_messages(void* arg) {
     unsigned char encrypted[BUFFER_SIZE];
     char decrypted[BUFFER_SIZE];
@@ -22,11 +25,17 @@ void* receive_messages(void* arg) {
 
         // descriptografa a mensagem recebida
         decrypt_message(encrypted, decrypted, (unsigned char*)key, 16, bytes);
-        printf("\n[Cliente] %s\n", decrypted);
+
+        // apaga a linha atual e imprime a mensagem recebida,
+        // depois repõe o prompt
+        printf("\r" BLUE "[Cliente] %s\n" RESET, decrypted);
+        printf("> ");
+        fflush(stdout);
     }
     return NULL;
 }
 
+// thread para enviar mensagens digitadas
 void* send_messages(void* arg) {
     char buffer[BUFFER_SIZE];
     unsigned char encrypted[BUFFER_SIZE];
@@ -45,6 +54,8 @@ void* send_messages(void* arg) {
 }
 
 int main() {
+    print_header("Servidor");
+    
     int server_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_size = sizeof(client_addr);
@@ -60,14 +71,14 @@ int main() {
     printf("[Servidor] Aguardando conexão na porta %d...\n", PORT);
 
     client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_size);
-    printf("[Servidor] Cliente conectado!\n");
+    printf(GREEN "[Servidor] Cliente conectado!\n" RESET);
 
-    // recebe chave
+    // recebe chave do cliente
     recv(client_fd, key, 16, 0);
     FILE *kf = fopen("session.key", "wb");
     fwrite(key, 1, 16, kf);
     fclose(kf);
-    printf("[Servidor] Chave recebida e salva.\n");
+    printf(GREEN "[Servidor] Chave recebida e salva.\n" RESET);
 
     // cria threads de envio e recebimento
     pthread_t recv_thread, send_thread;
