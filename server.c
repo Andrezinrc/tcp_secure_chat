@@ -20,8 +20,9 @@ void* receive_messages(void* arg) {
         int bytes = recv(client_fd, encrypted, BUFFER_SIZE, 0);
         if (bytes <= 0) break;
 
+        // descriptografa a mensagem recebida
         decrypt_message(encrypted, decrypted, (unsigned char*)key, 16, bytes);
-        printf("\n[Cliente] %s\n", decrypted); // decrypt
+        printf("\n[Cliente] %s\n", decrypted);
     }
     return NULL;
 }
@@ -34,10 +35,11 @@ void* send_messages(void* arg) {
         printf("> ");
         fflush(stdout);
         fgets(buffer, BUFFER_SIZE, stdin);
-        buffer[strcspn(buffer, "\n")] = 0; // remove \n
+        buffer[strcspn(buffer, "\n")] = 0;
 
+        // criptografa a mensagem antes de enviar
         encrypt_message(buffer, encrypted, (unsigned char*)key, 16);
-        send(client_fd, encrypted, strlen(buffer), 0); // encrypt
+        send(client_fd, encrypted, strlen(buffer), 0);
     }
     return NULL;
 }
