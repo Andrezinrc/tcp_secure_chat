@@ -6,11 +6,25 @@
 #include <time.h>
 #include <pthread.h>
 
-#define SERVER_IP "127.0.0.1" // IP
-#define PORT 8080 // porta
-#define BUFFER_SIZE 1024
+#include "client.h"
 
-int sockfd;
+// gera chave aleatoria e salva em session.key
+void generate_key() {
+    srand(time(NULL));
+    for (int i = 0; i < 16; i++) {
+        key[i] = rand() % 256;
+    }
+
+    FILE *f = fopen("session.key", "wb");
+    if (f) {
+        fwrite(key, 1, 16, f);
+        fclose(f);
+        printf("[Cliente] Chave gerada e salva em session.key\n");
+    } else {
+        perror("Erro ao salvar a chave");
+        exit(1);
+    }
+}
 
 // thread para receber mensagens do servidor
 void* receive_messages(void* arg) {

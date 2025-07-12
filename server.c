@@ -5,11 +5,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#define PORT 8080
-#define BUFFER_SIZE 1024
-
-int client_fd;
-char key[16];
+#include "server.h"
 
 // thread para receber mensagens do cliente
 void* receive_messages(void* arg) {
