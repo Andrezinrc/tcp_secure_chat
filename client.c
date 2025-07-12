@@ -7,6 +7,7 @@
 #include <pthread.h>
 
 #include "client.h"
+#include "crypto.h"
 
 // gera chave aleatoria e salva em session.key
 void generate_key() {
@@ -36,6 +37,9 @@ void* receive_messages(void* arg) {
 
         buffer[bytes] = '\0';
 
+        // descriptografa com a mesma chave
+        decrypt_data(buffer, bytes, key, 16);
+
         // limpa a linha, imprime a mensagem e reaparece o prompt
         printf("\r[Servidor] %s\n", buffer);
         printf("> ");
@@ -54,6 +58,8 @@ void* send_messages(void* arg) {
         if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) break;
         buffer[strcspn(buffer, "\n")] = 0;
 
+        // criptografa antes de enviar
+        encrypt_data(buffer, strlen(buffer), key, 16);
         send(sockfd, buffer, strlen(buffer), 0);
     }
     return NULL;
@@ -79,6 +85,10 @@ int main() {
         perror("Erro ao conectar");
         exit(1);
     }
+
+    // gera a chave e envia para o servidor
+    generate_key();
+    send(sockfd, key, 16, 0);
 
     // cria threads
     pthread_t recv_thread, send_thread;

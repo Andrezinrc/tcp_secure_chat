@@ -6,6 +6,7 @@
 #include <pthread.h>
 
 #include "server.h"
+#include "crypto.h"
 
 // thread para receber mensagens do cliente
 void* receive_messages(void* arg) {
@@ -15,6 +16,9 @@ void* receive_messages(void* arg) {
         int bytes = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
         if (bytes <= 0) break;
 
+        // descriptografa a mensagem
+        decrypt_data(buffer, bytes, key, 16);
+        
         // apaga a linha atual e imprime a mensagem recebida,
         // depois repõe o prompt
         buffer[bytes] = '\0';
@@ -28,13 +32,15 @@ void* receive_messages(void* arg) {
 // thread para enviar mensagens digitadas
 void* send_messages(void* arg) {
     char buffer[BUFFER_SIZE];
-    unsigned char encrypted[BUFFER_SIZE];
 
     while (1) {
         printf("> ");
         fflush(stdout);
         if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) break;
         buffer[strcspn(buffer, "\n")] = 0;
+
+        // criptografa a mensagem
+        encrypt_data(buffer, strlen(buffer), key, 16);
 
         // envia a mensagem
         send(client_fd, buffer, strlen(buffer), 0);
@@ -46,7 +52,7 @@ int main(){
     int server_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_size = sizeof(client_addr);
-    char buffer[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE]; 
 
     // cria socket TCP
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -80,6 +86,10 @@ int main(){
     }
     printf("[Servidor] Cliente conectado!\n");
 
+    // recebe a chave enviada pelo cliente
+    recv(client_fd, key, 16, 0);
+    printf("[Servidor] Chave recebida do cliente!\n");
+
     // cria threads de envio e recebimento
     pthread_t recv_thread, send_thread;
     pthread_create(&recv_thread, NULL, receive_messages, NULL);
@@ -88,7 +98,6 @@ int main(){
     // espera as threads terminarem
     pthread_join(recv_thread, NULL);
     pthread_join(send_thread, NULL);
-    
     
     close(client_fd);
     close(server_fd);
