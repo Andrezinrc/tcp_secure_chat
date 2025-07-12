@@ -3,12 +3,48 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 #define SERVER_IP "127.0.0.1" // IP
 #define PORT 8080 // porta
+#define BUFFER_SIZE 1024
+
+int sockfd;
+
+// thread para receber mensagens do servidor
+void* receive_messages(void* arg) {
+    char buffer[BUFFER_SIZE];
+
+    while (1) {
+        int bytes = recv(sockfd, buffer, BUFFER_SIZE - 1, 0);
+        if (bytes <= 0) break;
+
+        buffer[bytes] = '\0';
+
+        // limpa a linha, imprime a mensagem e reaparece o prompt
+        printf("\r[Servidor] %s\n", buffer);
+        printf("> ");
+        fflush(stdout);
+    }
+    return NULL;
+}
+
+// thread para enviar mensagens digitadas
+void* send_messages(void* arg) {
+    char buffer[BUFFER_SIZE];
+
+    while (1) {
+        printf("> ");
+        fflush(stdout);
+        if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) break;
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        send(sockfd, buffer, strlen(buffer), 0);
+    }
+    return NULL;
+}
 
 int main() {
-    int sockfd;
     struct sockaddr_in server_addr;
     char* msg = "Hello World!";
 
