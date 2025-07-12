@@ -11,6 +11,41 @@
 int client_fd;
 char key[16];
 
+// thread para receber mensagens do cliente
+void* receive_messages(void* arg) {
+    char buffer[BUFFER_SIZE];
+
+    while (1) {
+        int bytes = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
+        if (bytes <= 0) break;
+
+        // apaga a linha atual e imprime a mensagem recebida,
+        // depois repõe o prompt
+        buffer[bytes] = '\0';
+        printf("\r[Cliente] %s\n", buffer);
+        printf("> ");
+        fflush(stdout);
+    }
+    return NULL;
+}
+
+// thread para enviar mensagens digitadas
+void* send_messages(void* arg) {
+    char buffer[BUFFER_SIZE];
+    unsigned char encrypted[BUFFER_SIZE];
+
+    while (1) {
+        printf("> ");
+        fflush(stdout);
+        if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) break;
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        // envia a mensagem
+        send(client_fd, buffer, strlen(buffer), 0);
+    }
+    return NULL;
+}
+
 int main(){
     int server_fd;
     struct sockaddr_in server_addr, client_addr;
@@ -49,12 +84,15 @@ int main(){
     }
     printf("[Servidor] Cliente conectado!\n");
 
-    // recebe uma mensagem
-    int bytes = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
-    if(bytes > 0){
-        buffer[bytes] = '\0';
-        printf("[Cliente] %s\n", buffer);
-    }
+    // cria threads de envio e recebimento
+    pthread_t recv_thread, send_thread;
+    pthread_create(&recv_thread, NULL, receive_messages, NULL);
+    pthread_create(&send_thread, NULL, send_messages, NULL);
+
+    // espera as threads terminarem
+    pthread_join(recv_thread, NULL);
+    pthread_join(send_thread, NULL);
+    
     
     close(client_fd);
     close(server_fd);
