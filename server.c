@@ -7,6 +7,7 @@
 
 #include "server.h"
 #include "crypto.h"
+#include "colors.h"
 
 // thread para receber mensagens do cliente
 void* receive_messages(void* arg) {
@@ -16,13 +17,14 @@ void* receive_messages(void* arg) {
         int bytes = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
         if (bytes <= 0) break;
 
+        print_hex("CRYPTO ← RECEBIDA", buffer, bytes);
         // descriptografa a mensagem
         decrypt_data(buffer, bytes, key, 16);
         
         // apaga a linha atual e imprime a mensagem recebida,
         // depois repõe o prompt
         buffer[bytes] = '\0';
-        printf("\r[Cliente] %s\n", buffer);
+        printf(GREEN "\r[Cliente] %s\n" RESET, buffer);
         printf("> ");
         fflush(stdout);
     }
@@ -34,14 +36,15 @@ void* send_messages(void* arg) {
     char buffer[BUFFER_SIZE];
 
     while (1) {
-        printf("> ");
+        printf(CYAN "> " RESET);
         fflush(stdout);
         if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) break;
         buffer[strcspn(buffer, "\n")] = 0;
 
         // criptografa a mensagem
         encrypt_data(buffer, strlen(buffer), key, 16);
-
+        print_hex("CRYPTO → ENVIADO", buffer, strlen(buffer));
+        
         // envia a mensagem
         send(client_fd, buffer, strlen(buffer), 0);
     }
@@ -49,6 +52,7 @@ void* send_messages(void* arg) {
 }
 
 int main(){
+    printf(BLUE "SERVIDOR\n" RESET);
     int server_fd;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_size = sizeof(client_addr);

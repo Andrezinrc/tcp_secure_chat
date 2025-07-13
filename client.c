@@ -8,6 +8,7 @@
 
 #include "client.h"
 #include "crypto.h"
+#include "colors.h"
 
 // gera chave aleatoria e salva em session.key
 void generate_key() {
@@ -31,17 +32,18 @@ void generate_key() {
 void* receive_messages(void* arg) {
     char buffer[BUFFER_SIZE];
 
-    while (1) {
+    while (1) 
+    {
         int bytes = recv(sockfd, buffer, BUFFER_SIZE - 1, 0);
         if (bytes <= 0) break;
 
         buffer[bytes] = '\0';
 
-        // descriptografa com a mesma chave
+        print_hex("CRYPTO ← RECEBIDA", buffer, bytes);
         decrypt_data(buffer, bytes, key, 16);
 
         // limpa a linha, imprime a mensagem e reaparece o prompt
-        printf("\r[Servidor] %s\n", buffer);
+        printf(GREEN "\r[Servidor] %s\n" RESET, buffer);
         printf("> ");
         fflush(stdout);
     }
@@ -53,19 +55,21 @@ void* send_messages(void* arg) {
     char buffer[BUFFER_SIZE];
 
     while (1) {
-        printf("> ");
+        printf(CYAN "> " RESET);
         fflush(stdout);
         if (fgets(buffer, BUFFER_SIZE, stdin) == NULL) break;
         buffer[strcspn(buffer, "\n")] = 0;
 
         // criptografa antes de enviar
         encrypt_data(buffer, strlen(buffer), key, 16);
+        print_hex("CRYPTO → ENVIADO", buffer, strlen(buffer));
         send(sockfd, buffer, strlen(buffer), 0);
     }
     return NULL;
 }
 
 int main() {
+    printf(BLUE "CLIENTE\n" RESET);
     struct sockaddr_in server_addr;
     
     // cria o socket TCP IPv4
