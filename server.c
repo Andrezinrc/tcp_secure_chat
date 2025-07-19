@@ -9,7 +9,6 @@
 #include "crypto.h"
 #include "colors.h"
 
-// thread para receber mensagens do cliente
 void* receive_messages(void* arg) {
     char buffer[BUFFER_SIZE];
 
@@ -17,7 +16,7 @@ void* receive_messages(void* arg) {
         int bytes = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
         if (bytes <= 0) break;
 
-        print_hex("CRYPTO ← RECEBIDA", buffer, bytes);
+        //print_hex("CRYPTO ← RECEBIDA", buffer, bytes);
         // descriptografa a mensagem
         decrypt_data(buffer, bytes, key, 16);
         
@@ -31,7 +30,6 @@ void* receive_messages(void* arg) {
     return NULL;
 }
 
-// thread para enviar mensagens digitadas
 void* send_messages(void* arg) {
     char buffer[BUFFER_SIZE];
 
@@ -43,7 +41,7 @@ void* send_messages(void* arg) {
 
         // criptografa a mensagem
         encrypt_data(buffer, strlen(buffer), key, 16);
-        print_hex("CRYPTO → ENVIADO", buffer, strlen(buffer));
+        //print_hex("CRYPTO → ENVIADO", buffer, strlen(buffer));
         
         // envia a mensagem
         send(client_fd, buffer, strlen(buffer), 0);

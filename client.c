@@ -10,7 +10,6 @@
 #include "crypto.h"
 #include "colors.h"
 
-// gera chave aleatoria e salva em session.key
 void generate_key() {
     srand(time(NULL));
     for (int i = 0; i < 16; i++) {
@@ -28,7 +27,6 @@ void generate_key() {
     }
 }
 
-// thread para receber mensagens do servidor
 void* receive_messages(void* arg) {
     char buffer[BUFFER_SIZE];
 
@@ -39,7 +37,7 @@ void* receive_messages(void* arg) {
 
         buffer[bytes] = '\0';
 
-        print_hex("CRYPTO ← RECEBIDA", buffer, bytes);
+        //print_hex("CRYPTO ← RECEBIDA", buffer, bytes);
         decrypt_data(buffer, bytes, key, 16);
 
         // limpa a linha, imprime a mensagem e reaparece o prompt
@@ -50,7 +48,6 @@ void* receive_messages(void* arg) {
     return NULL;
 }
 
-// thread para enviar mensagens digitadas
 void* send_messages(void* arg) {
     char buffer[BUFFER_SIZE];
 
@@ -62,7 +59,7 @@ void* send_messages(void* arg) {
 
         // criptografa antes de enviar
         encrypt_data(buffer, strlen(buffer), key, 16);
-        print_hex("CRYPTO → ENVIADO", buffer, strlen(buffer));
+        //print_hex("CRYPTO → ENVIADO", buffer, strlen(buffer));
         send(sockfd, buffer, strlen(buffer), 0);
     }
     return NULL;
